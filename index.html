@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AstroGallery Neon | Lucas Adrián Britez</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        @keyframes nebula-drift {
+            0%, 100% { opacity: 0.4; transform: scale(1) translate(0, 0); }
+            50% { opacity: 0.7; transform: scale(1.1) translate(2%, 2%); }
+        }
+
+        .nebula-layer {
+            animation: nebula-drift 120s ease-in-out infinite;
+        }
+
+        .gallery-item {
+            transition: all 0.5s ease-out;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.02);
+            z-index: 10;
+            box-shadow: 0 0 30px rgba(138, 43, 226, 0.3);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Ocultar scrollbar */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <!-- React & Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Framer Motion -->
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback, useMemo } = React;
+        const { motion, AnimatePresence } = window.Motion;
+
+        // --- Configuración e Imágenes ---
+        const AVATAR_URL = 'https://i.ibb.co/SXgn4VdN/20250914-164055-2.jpg';
+        const ASTRO_IMAGES = [
+            { id: '1', url: 'https://i.ibb.co/1GVfK3tN/20250422-210114-1.jpg', title: 'Astro 1' },
+            { id: '2', url: 'https://i.ibb.co/q3yP78Vz/IMG-20250511-WA0027-1.jpg', title: 'Astro 2' },
+            { id: '3', url: 'https://i.ibb.co/Sws73jwW/IMG-20250201-WA0018-1.jpg', title: 'Astro 3' },
+            { id: '4', url: 'https://i.ibb.co/VcsDRwY0/20251202-000459-1.jpg', title: 'Astro 4' },
+            { id: '5', url: 'https://i.ibb.co/hJYXvf4q/20251125-211341-1.jpg', title: 'Astro 5' },
+            { id: '6', url: 'https://i.ibb.co/zW2Zjk3n/20251122-051922-1.jpg', title: 'Astro 6' },
+            { id: '7', url: 'https://i.ibb.co/KzF6JxRh/Screenshot-20251106-020245-1-1-1-1.jpg', title: 'Astro 7' },
+            { id: '8', url: 'https://i.ibb.co/FLxf1RSk/Screenshot-20251106-020152-1-1-1.jpg', title: 'Astro 8' },
+            { id: '9', url: 'https://i.ibb.co/9m7hsyW4/20250609-212610-1.jpg', title: 'Astro 9' },
+            { id: '10', url: 'https://i.ibb.co/zhGFVW0n/1753508780788.jpg', title: 'Astro 10' },
+            { id: '11', url: 'https://i.ibb.co/W4wWSr8h/20250725-232938-1.jpg', title: 'Astro 11' },
+            { id: '12', url: 'https://i.ibb.co/wN63DJ4T/20250725-232035-1.jpg', title: 'Astro 12' },
+            { id: '13', url: 'https://i.ibb.co/Gvd9Hv2c/Screenshot-20250704-201247.jpg', title: 'Astro 13' },
+            { id: '14', url: 'https://i.ibb.co/G3dMKsgL/Screenshot-20250704-201231.jpg', title: 'Astro 14' },
+            { id: '15', url: 'https://i.ibb.co/QvrkZtpJ/20250801-010708.jpg', title: 'Astro 15' },
+            { id: '16', url: 'https://i.ibb.co/5W3mBY9g/20250530-181800-1-1.jpg', title: 'Astro 16' },
+            { id: '17', url: 'https://i.ibb.co/KxjknnHB/Chat-GPT-Image-30-abr-2025-12-16-58-a-m.jpg', title: 'Astro 17' },
+            { id: '18', url: 'https://i.ibb.co/vx87g4pP/20250315-093514.jpg', title: 'Astro 18' },
+            { id: '19', url: 'https://i.ibb.co/0VtZfM34/20250304-191013-1.jpg', title: 'Astro 19' },
+            { id: '20', url: 'https://i.ibb.co/C5bZ7nZ8/20250209-192947-1.jpg', title: 'Astro 20' },
+            { id: '21', url: 'https://i.ibb.co/3yLWxgnL/IMG-20241216-223523-766.jpg', title: 'Astro 21' },
+        ];
+
+        // --- IndexedDB Helper ---
+        const DB_NAME = 'AstroGalleryDB';
+        const STORE_NAME = 'images';
+
+        const initDB = () => new Promise((res, rej) => {
+            const req = indexedDB.open(DB_NAME, 1);
+            req.onupgradeneeded = () => { if (!req.result.objectStoreNames.contains(STORE_NAME)) req.result.createObjectStore(STORE_NAME); };
+            req.onsuccess = () => res(req.result);
+            req.onerror = () => rej(req.error);
+        });
+
+        const saveToDB = async (key, val) => {
+            const db = await initDB();
+            return new Promise((res, rej) => {
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                tx.objectStore(STORE_NAME).put(val, key);
+                tx.oncomplete = () => res(true);
+                tx.onerror = () => rej(tx.error);
+            });
+        };
+
+        const getFromDB = async (key) => {
+            const db = await initDB();
+            return new Promise((res, rej) => {
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const req = tx.objectStore(STORE_NAME).get(key);
+                req.onsuccess = () => res(req.result);
+                req.onerror = () => rej(req.error);
+            });
+        };
+
+        // --- Iconos SVG ---
+        const InstagramIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-pink-500"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+        );
+
+        const XIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        );
+
+        // --- Componentes ---
+
+        const NebulaBackground = () => (
+            <div className="fixed inset-0 w-full h-full -z-20 bg-black overflow-hidden">
+                <div className="nebula-layer absolute inset-0 w-full h-full opacity-60 blur-[80px]">
+                    <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full" style={{ background: 'radial-gradient(circle, #39FF14 0%, transparent 70%)' }} />
+                    <div className="absolute -top-[10%] left-[30%] w-[50%] h-[50%] rounded-full" style={{ background: 'radial-gradient(circle, #8A2BE2 0%, transparent 70%)' }} />
+                    <div className="absolute top-[20%] -left-[20%] w-[50%] h-[50%] rounded-full" style={{ background: 'radial-gradient(circle, #FFFF00 0%, transparent 70%)' }} />
+                    <div className="absolute top-[40%] right-[0%] w-[70%] h-[70%] rounded-full" style={{ background: 'radial-gradient(circle, #FF0000 0%, transparent 70%)' }} />
+                </div>
+            </div>
+        );
+
+        const StarField = () => {
+            const canvasRef = useRef(null);
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                let animationFrameId;
+                let stars = [];
+                const resize = () => {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                    stars = [];
+                    const count = Math.floor((canvas.width * canvas.height) / 3000);
+                    for (let i = 0; i < count; i++) {
+                        stars.push({
+                            x: Math.random() * canvas.width,
+                            y: Math.random() * canvas.height,
+                            size: Math.random() * 2 + 1,
+                            color: Math.random() < 0.7 ? '#FFD700' : '#00BFFF',
+                            speedX: (Math.random() - 0.5) * 0.05,
+                            speedY: (Math.random() - 0.5) * 0.05,
+                            opacity: Math.random(),
+                            twinkleSpeed: Math.random() * 0.02 + 0.005,
+                        });
+                    }
+                };
+                const draw = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    stars.forEach(star => {
+                        star.x += star.speedX; star.y += star.speedY;
+                        if (star.x < 0) star.x = canvas.width; if (star.x > canvas.width) star.x = 0;
+                        if (star.y < 0) star.y = canvas.height; if (star.y > canvas.height) star.y = 0;
+                        star.opacity += star.twinkleSpeed;
+                        if (star.opacity > 1 || star.opacity < 0.2) star.twinkleSpeed = -star.twinkleSpeed;
+                        ctx.beginPath(); ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                        ctx.fillStyle = star.color; ctx.globalAlpha = Math.max(0.2, Math.min(1, star.opacity)); ctx.fill();
+                    });
+                    animationFrameId = requestAnimationFrame(draw);
+                };
+                window.addEventListener('resize', resize);
+                resize(); draw();
+                return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(animationFrameId); };
+            }, []);
+            return <canvas ref={canvasRef} className="fixed inset-0 w-full h-full -z-10 pointer-events-none" />;
+        };
+
+        const GalleryItem = ({ image, onClick }) => {
+            const [loaded, setLoaded] = useState(false);
+            return (
+                <div onClick={() => onClick(image)} className={`gallery-item relative aspect-square overflow-hidden rounded-lg bg-white/5 border border-white/10 cursor-pointer ${loaded ? 'fade-in' : 'opacity-0'}`}>
+                    <img src={image.url} alt={image.title} onLoad={() => setLoaded(true)} className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" />
+                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300">
+                        <p className="text-[10px] font-mono tracking-widest uppercase text-white/60">{image.title}</p>
+                    </div>
+                </div>
+            );
+        };
+
+        const Lightbox = ({ image, onClose }) => {
+            const [scale, setScale] = useState(1);
+            const [position, setPosition] = useState({ x: 0, y: 0 });
+            const [isDragging, setIsDragging] = useState(false);
+            const handleWheel = (e) => {
+                e.preventDefault();
+                const delta = e.deltaY * -0.01;
+                const newScale = Math.min(Math.max(1, scale + delta), 5);
+                setScale(newScale);
+                if (newScale === 1) setPosition({ x: 0, y: 0 });
+            };
+            const handleMouseDown = () => scale > 1 && setIsDragging(true);
+            const handleMouseUp = () => setIsDragging(false);
+            const handleMouseMove = (e) => {
+                if (isDragging) setPosition(prev => ({ x: prev.x + e.movementX, y: prev.y + e.movementY }));
+            };
+            return (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm" onWheel={handleWheel}>
+                    <button onClick={onClose} className="absolute top-6 right-6 p-2 text-white/50 hover:text-white transition-colors z-50"><XIcon /></button>
+                    <div className="absolute top-6 left-6 flex gap-4 z-50 text-white/30 font-mono text-[10px] uppercase tracking-widest">
+                        <span>Zoom: {Math.round(scale * 100)}%</span>
+                        <span className="hidden md:inline">Use wheel to zoom • Drag to pan</span>
+                    </div>
+                    <div className="relative w-full h-full flex items-center justify-center overflow-hidden cursor-grab active:cursor-grabbing" onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} onMouseMove={handleMouseMove}>
+                        <motion.img src={image.url} alt={image.title} className="max-w-[90%] max-h-[90%] object-contain pointer-events-none" animate={{ scale: scale, x: position.x, y: position.y }} transition={{ type: 'spring', stiffness: 300, damping: 30 }} />
+                    </div>
+                </motion.div>
+            );
+        };
+
+        const ProfileHeader = ({ avatarUrl }) => (
+            <div className="max-w-3xl mx-auto mb-16 p-6 md:p-8 rounded-3xl backdrop-blur-xl bg-white/5 border border-white/10 shadow-2xl fade-in">
+                <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+                    <div className="relative group">
+                        <div className="absolute -inset-0.5 bg-gradient-to-tr from-[#39FF14] to-[#8A2BE2] rounded-full blur opacity-30 group-hover:opacity-60 transition duration-500"></div>
+                        <div className="relative p-[2px] bg-gradient-to-tr from-[#39FF14] to-[#8A2BE2] rounded-full overflow-hidden">
+                            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-black overflow-hidden">
+                                <img src={avatarUrl} alt="Lucas Britez" className="w-full h-full object-cover" />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex-1 text-center md:text-left">
+                        <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight mb-2">_lucasbritez__</h2>
+                        <a href="https://www.instagram.com/_lucasbritez__?igsh=c2c4N3QzcTE1enNp" target="_blank" className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 text-white text-sm font-medium transition-all duration-300 hover:scale-105 active:scale-95 mb-4">
+                            <InstagramIcon /><span>Mi Instagram</span>
+                        </a>
+                        <p className="text-white/80 text-sm md:text-base leading-relaxed">Capturando el cielo nocturno, una imagen a la vez <br className="hidden md:block" />
+                            <span className="inline-block mt-2 text-lg md:text-xl">🪐 ☄️ 🌃 🌙 🌕 👽 🛸 📡 🛰️ 🌌 📲 🔭 ✨</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+
+        function App() {
+            const [images, setImages] = useState(ASTRO_IMAGES);
+            const [avatarUrl, setAvatarUrl] = useState(AVATAR_URL);
+            const [selectedImage, setSelectedImage] = useState(null);
+            const [isCaching, setIsCaching] = useState(true);
+
+            const cacheImages = useCallback(async () => {
+                try {
+                    const cachedImages = await getFromDB('gallery_images');
+                    const cachedAvatar = await getFromDB('avatar_image');
+                    if (cachedImages && cachedAvatar) {
+                        setImages(cachedImages); setAvatarUrl(cachedAvatar); setIsCaching(false); return;
+                    }
+                    const toBase64 = async (url) => {
+                        const res = await fetch(url); const blob = await res.blob();
+                        return new Promise((res, rej) => {
+                            const r = new FileReader(); r.onloadend = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob);
+                        });
+                    };
+                    const avatarB64 = await toBase64(AVATAR_URL);
+                    const processed = await Promise.all(ASTRO_IMAGES.map(async (img) => ({ ...img, url: await toBase64(img.url) })));
+                    await saveToDB('gallery_images', processed); await saveToDB('avatar_image', avatarB64);
+                    setImages(processed); setAvatarUrl(avatarB64);
+                } catch (e) { console.error('Cache error:', e); } finally { setIsCaching(false); }
+            }, []);
+
+            useEffect(() => { cacheImages(); }, [cacheImages]);
+
+            return (
+                <div className="min-h-screen font-sans selection:bg-violet-500/30">
+                    <NebulaBackground /><StarField />
+                    <header className="relative z-10 pt-20 pb-8 px-6 text-center">
+                        <h1 className="text-5xl md:text-7xl font-light tracking-tighter text-white mb-12">ASTRO<span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-emerald-400">GALLERY</span></h1>
+                        <ProfileHeader avatarUrl={avatarUrl} />
+                    </header>
+                    <main className="relative z-10 max-w-7xl mx-auto px-4 pb-24">
+                        {isCaching && <div className="flex justify-center mb-8"><p className="text-[10px] font-mono text-white/20 animate-pulse tracking-widest uppercase">Optimizing cosmic data...</p></div>}
+                        <div className="grid grid-cols-3 gap-2 md:gap-4">{images.map((img) => (<GalleryItem key={img.id} image={img} onClick={setSelectedImage} />))}</div>
+                    </main>
+                    <footer className="relative z-10 py-12 text-center border-t border-white/5">
+                        <p className="text-xs font-sans font-light text-white/80 tracking-wide">Lucas Adrián Britez todos los derechos reservados &copy; 2026</p>
+                    </footer>
+                    <AnimatePresence>{selectedImage && <Lightbox image={selectedImage} onClose={() => setSelectedImage(null)} />}</AnimatePresence>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
