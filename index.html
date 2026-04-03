@@ -67,8 +67,11 @@
         const { motion, AnimatePresence } = window.Motion;
 
         // --- Configuración e Imágenes ---
-        const AVATAR_URL = 'https://i.ibb.co/SXgn4VdN/20250914-164055-2.jpg';
+        const AVATAR_URL = 'https://i.ibb.co/ZzNBZwsX/IMG-20260401-225528-411.jpg';
         const ASTRO_IMAGES = [
+            { id: 'n1', url: 'https://i.ibb.co/prPDnzrb/20260402-013723-1.jpg', title: 'Astro Nueva 1' },
+            { id: 'n2', url: 'https://i.ibb.co/k6HxL8yN/20260402-211438-1-1.jpg', title: 'Astro Nueva 2' },
+            { id: 'n3', url: 'https://i.ibb.co/W4HyDCs3/20260402-205428-1-1.jpg', title: 'Astro Nueva 3' },
             { id: '1', url: 'https://i.ibb.co/1GVfK3tN/20250422-210114-1.jpg', title: 'Astro 1' },
             { id: '2', url: 'https://i.ibb.co/q3yP78Vz/IMG-20250511-WA0027-1.jpg', title: 'Astro 2' },
             { id: '3', url: 'https://i.ibb.co/Sws73jwW/IMG-20250201-WA0018-1.jpg', title: 'Astro 3' },
@@ -93,7 +96,7 @@
         ];
 
         // --- IndexedDB Helper ---
-        const DB_NAME = 'AstroGalleryDB';
+        const DB_NAME = 'AstroGalleryDB_v2';
         const STORE_NAME = 'images';
 
         const initDB = () => new Promise((res, rej) => {
